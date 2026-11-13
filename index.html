@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="EduTrack attendance management prototype." />
+  <title>EduTrack Attendance</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="loginPage" class="login-page">
+    <div class="login-shell">
+      <aside class="login-aside" aria-label="EduTrack overview">
+        <div class="login-brand">
+          <span class="login-brand-mark" aria-hidden="true">E</span>
+          <span>EduTrack</span>
+        </div>
+        <div class="login-aside-copy">
+          <p class="login-eyebrow">ATTENDANCE, MADE CLEAR</p>
+          <h1>Make every school day count.</h1>
+          <p>A calmer way to keep up with courses, attendance, and the people who make learning happen.</p>
+        </div>
+        <div class="login-aside-note">
+          <span class="login-note-icon" aria-hidden="true">✓</span>
+          <span><strong>One place for your school day</strong><br />Attendance, updates, and progress.</span>
+        </div>
+        <div class="login-aside-footer"><span></span> Your school community, connected</div>
+      </aside>
+
+      <form class="login-card" onsubmit="submitAuth(event)">
+        <div class="login-form-heading">
+          <p class="login-eyebrow">WELCOME TO EDUTRACK</p>
+          <h2 id="authTitle">ATTENDANCE SYSTEM</h2>
+          <p id="authDescription">Log in to manage attendance and school messages.</p>
+          <p class="privacy-notice">Prototype notice: accounts and attendance data are stored only in this browser. Do not enter real student or sensitive personal information.</p>
+        </div>
+
+        <label id="nameLabel" class="hidden" for="accountName">Full name</label>
+        <input id="accountName" class="hidden" type="text" placeholder="Your full name" autocomplete="name" />
+
+        <label for="role">Account type</label>
+        <select id="role" onchange="updateCourseField()" required>
+          <option value="teacher">Teacher</option>
+          <option value="trainee">Trainee</option>
+        </select>
+
+        <div id="institutionGroup" class="hidden">
+          <label for="institutionName">Institution name</label>
+          <input id="institutionName" type="text" list="institutionSuggestions" placeholder="Search or enter an institution name" autocomplete="organization" />
+          <datalist id="institutionSuggestions"></datalist>
+        </div>
+
+        <div id="admissionNumberGroup" class="hidden">
+          <label for="admissionNumber">Admission number</label>
+          <input id="admissionNumber" type="text" placeholder="Enter your admission number" autocomplete="off" />
+        </div>
+
+        <div id="courseGroup" class="hidden">
+          <label id="courseLabel" for="accountCourse">Course</label>
+          <input id="accountCourse" type="text" placeholder="Enter your course name" />
+        </div>
+
+        <div id="unitGroup" class="hidden">
+          <label for="accountUnit">Unit name</label>
+          <input id="accountUnit" type="text" placeholder="Enter the unit name assigned by your teacher" />
+        </div>
+
+        <label id="emailLabel" for="email">Email address</label>
+        <input id="email" type="email" placeholder="you@edutrack.com" autocomplete="email" required />
+
+        <label id="passwordLabel" for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+          <label id="passwordToggle" class="password-toggle">
+          <input type="checkbox" onchange="togglePasswordVisibility('password', this)" />
+          Show password
+        </label>
+
+        <div id="confirmPasswordGroup" class="hidden">
+          <label for="confirmPassword">Confirm password</label>
+          <input id="confirmPassword" type="password" placeholder="Re-enter your password" autocomplete="new-password" />
+        </div>
+
+        <button id="authSubmit" class="login-submit" type="submit">Log in</button>
+        <p id="loginError" class="login-error" aria-live="polite"></p>
+        <div class="login-secondary-actions">
+          <button id="authSwitch" class="auth-switch" type="button" onclick="toggleAuthMode()">Create an account</button>
+          <button id="authForgot" class="auth-switch" type="button" onclick="setAuthMode('recover')">Forgot password?</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div id="app" class="hidden">
+  <header>
+    <div class="header-brand">
+      <h1>EduTrack Attendance</h1>
+      <p id="activeInstitutionDisplay" class="active-class-display hidden" aria-live="polite"></p>
+      <p id="activeClassDisplay" class="active-class-display hidden" aria-live="polite"></p>
+    </div>
+    <div class="device-clock" aria-label="Current device date and time">
+      <time id="deviceTime"></time>
+      <span id="deviceDate"></span>
+    </div>
+    <div class="header-actions">
+      <div class="user-info">
+        <img id="profileAvatar" class="profile-avatar" alt="Profile photo" />
+        <span id="loggedInUser"></span>
+        <span class="student-count" title="Show trainee list">Trainees: <button type="button" id="headerStudentCount" class="mini-student-button" onclick="showStudentList()">0</button></span>
+        <button id="profileNavButton" class="profile-nav-button" type="button" aria-pressed="false" onclick="showProfileInterface()"><span class="nav-icon" aria-hidden="true">◉</span>Profile</button>
+        <div class="settings-wrap">
+          <button type="button" class="icon-button" aria-label="Open settings" title="Settings" onclick="toggleSettings()">&#9881;</button>
+          <div id="settingsPanel" class="settings-panel hidden">
+            <h3>Settings</h3>
+            <section class="settings-section">
+              <h4>Appearance</h4>
+              <label for="themeSelect">System theme</label>
+              <select id="themeSelect" onchange="applyThemePreference(this.value)">
+                <option value="classic">Classic</option>
+                <option value="ocean">Ocean</option>
+                <option value="forest">Forest</option>
+                <option value="sunset">Sunset</option>
+                <option value="berry">Berry</option>
+                <option value="arctic">Arctic</option>
+                <option value="amber">Amber</option>
+                <option value="graphite">Graphite</option>
+                <option value="lagoon">Lagoon</option>
+                <option value="lavender">Lavender</option>
+                <option value="rose">Rose</option>
+              </select>
+              <label for="lessonsPerDayInput">Lessons per day</label>
+              <div class="lesson-count-stepper">
+                <button id="decreaseLessonsButton" type="button" aria-label="Decrease lessons per day" title="Decrease lessons" onclick="adjustLessonsPerDay(-1)">−</button>
+                <input id="lessonsPerDayInput" type="number" min="1" max="12" step="1" value="3" onchange="updateLessonsPerDay(this.value)" />
+                <button id="increaseLessonsButton" type="button" aria-label="Increase lessons per day" title="Increase lessons" onclick="adjustLessonsPerDay(1)">+</button>
+              </div>
+              <label class="settings-toggle" for="darkModeToggle">
+                <input id="darkModeToggle" type="checkbox" onchange="toggleDarkMode(this.checked)" />
+                Dark mode
+              </label>
+              <label for="fontSelect">Dashboard font</label>
+              <select id="fontSelect" onchange="applyFontPreference(this.value)">
+                <option value="arial">Arial</option>
+                <option value="georgia">Georgia</option>
+                <option value="trebuchet">Trebuchet MS</option>
+                <option value="verdana">Verdana</option>
+                <option value="courier">Courier New</option>
+              </select>
+              <label for="fontSizeInput">Font size</label>
+              <div class="font-size-control">
+                <input id="fontSizeInput" type="range" min="85" max="120" step="5" value="100" oninput="applyFontSizePreference(this.value)" />
+                <output id="fontSizeValue" for="fontSizeInput">100%</output>
+              </div>
+              <label for="systemWallpaperSelect">System wallpaper</label>
+              <select id="systemWallpaperSelect" onchange="setSystemWallpaper(this.value)">
+                <option value="custom" disabled>Custom upload</option>
+                <option value="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&amp;fit=crop&amp;w=2560&amp;q=90">Live Mountain Lake</option>
+              </select>
+              <label for="wallpaperUpload">Upload a custom wallpaper</label>
+              <input id="wallpaperUpload" type="file" accept="image/*" onchange="changeWallpaper(event)" />
+              <button type="button" onclick="resetWallpaper()">Reset wallpaper</button>
+            </section>
+            <section class="settings-section">
+              <h4>Library</h4>
+              <button id="magazineSettingsLink" class="settings-nav-link hidden" type="button" onclick="openMagazineLibraryFromSettings()">
+                <span class="nav-icon" aria-hidden="true">▤</span>Magazine Library
+              </button>
+            </section>
+            <section class="settings-section">
+              <h4>Account</h4>
+              <button id="accountSettingsLink" class="settings-nav-link" type="button" onclick="showProfileInterface(); toggleSettings(false);">
+                <span class="nav-icon" aria-hidden="true">◎</span>My Account
+              </button>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="imageViewer" class="image-viewer hidden" role="dialog" aria-label="Profile image viewer" onclick="closeImageViewer()">
+      <button type="button" aria-label="Close image viewer" onclick="event.stopPropagation(); closeImageViewer()">&times;</button>
+      <div id="studentProfileViewer" class="student-profile-viewer hidden" onclick="event.stopPropagation()">
+        <img id="viewedStudentImage" alt="Expanded student profile photo" />
+        <h2 id="viewedStudentName"></h2>
+        <p id="viewedStudentCourse"></p>
+        <p id="viewedStudentStatus"></p>
+        <p>Trainees in system: <strong id="profileStudentCount"></strong></p>
+        <button id="profileDeleteStudent" class="profile-delete-student" type="button" onclick="deleteViewedStudent()">Delete trainee</button>
+      </div>
+      <img id="viewedProfileImage" alt="Expanded profile photo" onclick="event.stopPropagation()" />
+    </div>
+    <section id="profileInterface" class="profile-interface panel hidden">
+      <h2>My Profile</h2>
+      <p>Update your account details and profile image.</p>
+      <p class="profile-role">Role: <strong id="profileRole"></strong></p>
+      <section id="classSettingsSection" class="profile-class-settings hidden">
+        <h3>Courses and Units</h3>
+        <label for="classSelect">Switch courses</label>
+        <select id="classSelect" onchange="switchClass(this.value)"></select>
+        <label for="newClassName">Create a course (optional)</label>
+        <input id="newClassName" type="text" maxlength="60" placeholder="Course name" />
+        <label for="newUnitName">Add a unit to the selected or new course (optional)</label>
+        <input id="newUnitName" type="text" maxlength="60" placeholder="Unit name" />
+        <button type="button" onclick="addClassOrUnit()">Add and save</button>
+        <p id="classSettingsResult" class="settings-result" aria-live="polite"></p>
+      </section>
+      <img id="profileInterfaceAvatar" class="profile-interface-avatar" alt="Profile photo preview" onclick="openImageViewer()" />
+      <form id="profileEditor" class="profile-editor" onsubmit="saveProfile(event)">
+        <label for="profileName">Your name</label>
+        <input id="profileName" type="text" maxlength="60" required />
+        <label id="profileEmailLabel" for="profileEmail">Email address</label>
+        <input id="profileEmail" type="email" required />
+        <label for="profileImage">Profile image</label>
+        <input id="profileImage" type="file" accept="image/*" onchange="previewProfileImage(event)" />
+        <p id="studentProfilePhotoHelp" class="profile-photo-help hidden">Upload a photo so your teacher can recognize you in the attendance roster.</p>
+        <div class="profile-actions">
+          <button type="submit">Save changes</button>
+          <button type="button" class="profile-cancel" onclick="closeProfileInterface()">Back</button>
+        </div>
+        <p id="profileResult" class="profile-result" aria-live="polite" role="status"></p>
+      </form>
+    </section>
+
+    <!-- Teacher Interface -->
+    <section id="teacherView" class="hidden">
+      <div class="welcome">
+        <h2>Teacher Dashboard</h2>
+        <p>Manage today's attendance and communicate with trainees.</p>
+      </div>
+
+      <nav class="interface-nav" aria-label="Teacher interfaces">
+        <button type="button" class="active" onclick="showInterface('teacherDashboard', this)"><span class="nav-icon" aria-hidden="true">▣</span>Dashboard</button>
+        <button type="button" onclick="showInterface('todayAttendance', this)"><span class="nav-icon" aria-hidden="true">✓</span>Today's Attendance</button>
+        <button type="button" onclick="showInterface('studentRosterPanel', this)"><span class="nav-icon" aria-hidden="true">☰</span>Trainee Roster</button>
+        <button type="button" onclick="showInterface('studentSummaryPanel', this)"><span class="nav-icon" aria-hidden="true">☰</span>Trainee Summary</button>
+        <button type="button" onclick="showInterface('attendanceHistoryPanel', this)"><span class="nav-icon" aria-hidden="true">◫</span>Attendance History</button>
+        <button type="button" onclick="showInterface('markAttendancePanel', this)"><span class="nav-icon" aria-hidden="true">✎</span>Mark Attendance</button>
+        <button type="button" onclick="showInterface('lessonCoveragePanel', this)"><span class="nav-icon" aria-hidden="true">✎</span>Lesson Coverage</button>
+        <button type="button" onclick="showInterface('classAttendanceOverview', this)"><span class="nav-icon" aria-hidden="true">▤</span>All Trainees Attendance</button>
+      </nav>
+
+      <div id="teacherDashboard" class="stats">
+        <div class="stat">
+          <button type="button" id="totalStudents" class="mini-student-button" onclick="showStudentList()">0</button>
+          Total Trainees
+        </div>
+        <div class="stat">
+          <strong id="presentCount">0</strong>
+          Present Today
+        </div>
+        <div class="stat">
+          <strong id="attendanceRate">0%</strong>
+          Attendance Rate
+        </div>
+        <section class="system-magazine-viewer dashboard-magazine" aria-label="System magazines">
+          <p id="systemMagazineStatus" class="system-magazine-status" role="status" aria-live="polite">Loading live magazines…</p>
+          <div class="system-magazine-stage">
+            <div id="systemMagazineContent" class="system-magazine-content">
+              <img id="systemMagazineImage" class="hidden" alt="System magazine" />
+              <a id="systemMagazineOnlineLabel" class="hidden" target="_blank" rel="noopener noreferrer"></a>
+            </div>
+            <iframe id="systemMagazineDocument" class="system-magazine-document hidden" title="Magazine PDF preview"></iframe>
+            <div class="system-magazine-controls">
+              <button type="button" onclick="changeSystemMagazine(-1)" aria-label="Previous system magazine">&#8592;</button>
+              <button type="button" onclick="changeSystemMagazine(1)" aria-label="Next system magazine">&#8594;</button>
+            </div>
+          </div>
+          <p id="systemMagazineCaption" class="system-magazine-caption hidden" aria-live="polite"></p>
+          <div id="systemMagazineIndicators" class="system-magazine-indicators" role="group" aria-label="Choose a magazine"></div>
+        </section>
+      </div>
+
+      <section id="classAttendanceOverview" class="panel class-attendance-overview hidden" aria-live="polite">
+        <h3>All Trainees Attendance</h3>
+        <div class="class-attendance-table-wrap"></div>
+      </section>
+
+      <div class="layout">
+        <div id="todayAttendance" class="panel hidden">
+          <h3>Today's Attendance</h3>
+          <div id="studentList"></div>
+
+          <form class="add-student-form" onsubmit="addStudent(event)">
+            <h4>Add Trainee</h4>
+            <input id="newStudentName" type="text" placeholder="Trainee name" required />
+            <input id="newStudentAdmissionNumber" type="text" placeholder="Admission number" required />
+            <input id="newStudentCourse" type="text" placeholder="Course name" value="My course" required />
+            <select id="newStudentUnit" required>
+              <option value="">Select a teacher-added unit</option>
+            </select>
+            <button type="submit">Add Trainee</button>
+            <p id="addStudentResult"></p>
+          </form>
+        </div>
+
+      </div>
+
+      <div id="studentRosterPanel" class="panel hidden">
+        <h3>Trainee Roster</h3>
+        <div id="studentRosterList" class="student-roster-list"></div>
+        <p id="studentRosterResult" class="settings-result" aria-live="polite"></p>
+      </div>
+
+      <div id="studentSummaryPanel" class="panel hidden">
+        <h3>Trainee Attendance Summary</h3>
+        <label for="summaryStudentSelect">Choose trainee</label>
+        <select id="summaryStudentSelect" onchange="renderAttendanceSummary()"></select>
+        <div id="attendanceSummary"></div>
+      </div>
+
+      <div id="attendanceHistoryPanel" class="panel hidden">
+        <h3>Attendance History</h3>
+        <div class="history-controls">
+          <div>
+            <label for="historyStudentSelect">Choose trainee</label>
+            <select id="historyStudentSelect" onchange="renderAttendanceHistory()"></select>
+          </div>
+          <div>
+            <label for="historyPeriodSelect">Time period</label>
+            <select id="historyPeriodSelect" onchange="renderAttendanceHistory()">
+              <option value="week">Weekly</option>
+              <option value="week">Monthly</option>
+              <option value="month">3 Month</option>
+              <option value="threeMonths">3 months</option>
+              <option value="year">Yearly</option>
+            </select>
+          </div>
+        </div>
+        <div class="history-day-controls">
+          <button type="button" onclick="changeHistoryDate(-1)">Previous day</button>
+          <label for="historyDate">Selected date
+            <input id="historyDate" type="date" onchange="renderAttendanceHistory()" />
+          </label>
+          <button type="button" onclick="changeHistoryDate(1)">Next day</button>
+        </div>
+        <div id="attendanceHistory"></div>
+      </div>
+
+      <div id="markAttendancePanel" class="panel hidden">
+        <h3>Mark Attendance</h3>
+        <div class="bulk-controls">
+          <div>
+            <label for="bulkPeriodSelect">Mark for</label>
+            <select id="bulkPeriodSelect">
+              <option value="day">One day</option>
+              <option value="week">One week</option>
+            </select>
+          </div>
+          <div>
+            <label for="bulkDate">Date</label>
+            <input id="bulkDate" type="date" />
+          </div>
+      </div>
+        <div class="mark-all-row">
+          <button type="button" onclick="markAllStudentsPresent()">Mark all trainees present</button>
+        </div>
+        <form class="absent-trainee-form" onsubmit="addAbsentTrainee(event)">
+          <div>
+            <label for="absentTraineeAdmissions">Absent trainee admission numbers (one per line)</label>
+            <textarea id="absentTraineeAdmissions" placeholder="Admission no &#10;Admission no" required></textarea>
+          </div>
+          <button type="submit">Mark trainees absent</button>
+        </form>
+        <p id="absentTraineeResult" class="settings-result" aria-live="polite"></p>
+        <div id="absentTraineeList" class="absent-trainee-list" aria-live="polite"></div>
+        <div id="bulkStudentList"></div>
+        <div class="bulk-actions">
+          <button type="button" onclick="markSelectedAttendance(true)">Mark attended</button>
+          <button type="button" class="absent-action" onclick="markSelectedAttendance(false)">Mark absent</button>
+        </div>
+        <p id="bulkResult"></p>
+      </div>
+
+      <div id="lessonCoveragePanel" class="panel hidden">
+        <h3>Lesson Coverage</h3>
+        <form class="lesson-coverage-form" onsubmit="saveLessonCoverage(event)">
+          <div>
+            <label for="lessonCoverageDate">Date</label>
+            <input id="lessonCoverageDate" type="date" />
+          </div>
+          <div>
+            <label for="lessonCoverageTopic">Topic</label>
+            <input id="lessonCoverageTopic" type="text" placeholder="Main lesson topic" required />
+          </div>
+          <div>
+            <label for="lessonCoverageSubTopic">Sub-topic</label>
+            <input id="lessonCoverageSubTopic" type="text" placeholder="Sub-topic covered" />
+          </div>
+          <div>
+            <label for="lessonCoverageSummary">Summary</label>
+            <textarea id="lessonCoverageSummary" placeholder="What was done that day..." required></textarea>
+          </div>
+          <button type="submit">Save lesson coverage</button>
+        </form>
+        <p id="lessonCoverageResult" class="settings-result" aria-live="polite"></p>
+        <div id="lessonCoverageList" class="lesson-coverage-list" aria-live="polite"></div>
+        <div id="lessonCoverageViewer" class="lesson-coverage-viewer hidden" role="dialog" aria-modal="true" aria-labelledby="lessonCoverageViewerTitle" onclick="if (event.target === this) closeLessonCoverage()">
+          <article class="lesson-coverage-viewer-card" tabindex="-1">
+            <button type="button" class="lesson-coverage-close" aria-label="Close lesson coverage" onclick="closeLessonCoverage()">&times;</button>
+            <p id="lessonCoverageViewerDate" class="lesson-coverage-viewer-date"></p>
+            <section class="lesson-coverage-detail lesson-coverage-topic">
+              <h2 id="lessonCoverageViewerTitle"></h2>
+            </section>
+            <section id="lessonCoverageSubTopicSection" class="lesson-coverage-detail lesson-coverage-subtopic">
+              <h3>Sub-topic</h3>
+              <p id="lessonCoverageViewerSubTopic"></p>
+            </section>
+            <section class="lesson-coverage-detail lesson-coverage-summary">
+              <h3>Summary</h3>
+              <p id="lessonCoverageViewerSummary"></p>
+            </section>
+          </article>
+        </div>
+      </div>
+
+      <div id="magazineLibraryPanel" class="panel hidden">
+        <h3>Magazine Library</h3>
+        <div class="magazine-add-options">
+          <form onsubmit="addOnlineMagazine(event)">
+            <h4>Add from online</h4>
+            <input id="onlineMagazineTitle" type="text" maxlength="100" placeholder="Magazine title" aria-label="Online magazine title" required />
+            <input id="onlineMagazineUrl" type="url" placeholder="https://example.com/magazine" aria-label="Online magazine URL" required />
+            <button type="submit">Add online magazine</button>
+          </form>
+          <form onsubmit="addDeviceMagazine(event)">
+            <h4>Add from this device</h4>
+            <input id="deviceMagazineTitle" type="text" maxlength="100" placeholder="Magazine title (optional)" aria-label="Device magazine title" />
+            <input id="deviceMagazineFile" type="file" accept="application/pdf,image/*" aria-label="Choose a PDF or image magazine" required />
+            <button type="submit">Upload magazine</button>
+          </form>
+        </div>
+        <p id="magazineStatus" class="magazine-status" aria-live="polite"></p>
+        <div id="magazineList" class="magazine-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- Student Interface -->
+    <section id="studentView" class="hidden">
+      <div class="welcome">
+        <h2 id="studentWelcome">Welcome</h2>
+        <p id="studentCourse" class="hidden"></p>
+        <p id="studentUnit" class="hidden"></p>
+        <p>View your attendance and messages from your teacher.</p>
+      </div>
+
+      <nav class="interface-nav" aria-label="Trainee interfaces">
+        <button type="button" class="active" onclick="showInterface('studentAttendancePanel', this)"><span class="nav-icon" aria-hidden="true">✓</span>My Attendance</button>
+        <button type="button" onclick="showInterface('studentNotesPanel', this)"><span class="nav-icon" aria-hidden="true">✉</span>Teacher Notes</button>
+      </nav>
+
+      <div class="stats">
+        <div class="stat">
+          <strong>0%</strong>
+          Attendance
+        </div>
+        <div class="stat">
+          <strong>0</strong>
+          Days Present
+        </div>
+        <div class="stat">
+          <strong id="noteCount">0</strong>
+          Teacher Notes
+        </div>
+      </div>
+
+      <div class="layout">
+        <div id="studentAttendancePanel" class="panel">
+          <h3>Attendance History</h3>
+          <p class="empty-state">Attendance records will appear here after your teacher records them.</p>
+        </div>
+
+        <div id="studentNotesPanel" class="panel hidden">
+          <h3>Notes from Teacher</h3>
+          <div id="notes"><p class="empty-state">You don't have any teacher notes yet.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
